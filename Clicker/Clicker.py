@@ -1,4 +1,5 @@
 import flet as ft
+import os
 
 def main(page: ft.Page):
     # Настройка страницы
@@ -9,12 +10,30 @@ def main(page: ft.Page):
     page.padding = 0
     page.theme_mode = ft.ThemeMode.LIGHT
 
+    # Получение абсолютного пути к папке проекта
+    project_dir = os.path.dirname(os.path.abspath(__file__))
+    icons_dir = os.path.join(project_dir, "Icons")
+    
     # Счётчик кликов
     clicks = ft.Ref[ft.Text]()
+    # Референс для кликабельной картинки
+    clickable_image = ft.Ref[ft.Image]()
 
     def increment_click(e):
         current_clicks = int(clicks.current.value.split(": ")[1])
-        clicks.current.value = f"Клики: {current_clicks + 1}"
+        new_clicks = current_clicks + 1
+        clicks.current.value = f"Клики: {new_clicks}"
+        
+        # Смена картинки при достижении 100 кликов
+        if new_clicks == 100:
+            new_image_path = os.path.join(icons_dir, "secondMakan.png")  # Замените на имя вашей новой картинки
+            if os.path.exists(new_image_path):
+                clickable_image.current.src = new_image_path
+            else:
+                # Если файл не найден, используем fallback
+                fallback_path = os.path.join(icons_dir, "MacanIconUpgraded.png")
+                clickable_image.current.src = fallback_path
+        
         page.update()
 
     # Создание интерфейса
@@ -24,7 +43,7 @@ def main(page: ft.Page):
                 # Фон
                 ft.Container(
                     content=ft.Image(
-                        src=r"D:\Python\Clicker\Clicker\Icons\background.png",
+                        src=os.path.join(icons_dir, "background.png"),
                         width=800,
                         height=600,
                         fit=ft.ImageFit.FILL,
@@ -50,17 +69,18 @@ def main(page: ft.Page):
                 # Кликабельная картинка по центру (УВЕЛИЧЕННАЯ)
                 ft.Container(
                     content=ft.Image(
-                        src=r"D:\Python\Clicker\Clicker\Icons\MacanIcon.png",
-                        width=300,  # Увеличено с 200 до 300
-                        height=300, # Увеличено с 200 до 300
+                        ref=clickable_image,
+                        src=os.path.join(icons_dir, "MacanIcon.png"),
+                        width=300,
+                        height=300,
                         fit=ft.ImageFit.CONTAIN,
                     ),
                     alignment=ft.alignment.center,
                     on_click=increment_click,
-                    width=400,  # Увеличено с 300 до 400
-                    height=400, # Увеличено с 300 до 400
-                    top=100,    # Скорректировано положение
-                    left=200,   # Скорректировано положение
+                    width=400,
+                    height=400,
+                    top=100,
+                    left=200,
                 )
             ],
             width=800,
