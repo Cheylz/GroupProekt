@@ -106,37 +106,60 @@ def main(page: ft.Page):
     )
 
     # Создание интерфейса
+    background_image = ft.Image(
+        src=os.path.join(icons_dir, "background.png"),
+        width=800,
+        height=600,
+        fit="fill",
+    )
+
+    def change_background(e):
+        if background_image.src.endswith("background.png"):
+            background_image.src = os.path.join(icons_dir, "mskcity.jpg")
+        else:
+            background_image.src = os.path.join(icons_dir, "background.png")
+        page.update()
+
+    change_bg_button = ft.TextButton(
+        text="Сменить фон",
+        on_click=change_background,
+        style=ft.ButtonStyle(
+            bgcolor="white",
+            color="black",
+            padding=10,
+        )
+    )
+
+    change_bg_container = ft.Container(
+        content=change_bg_button,
+        top=20,
+        left=20,
+    )
+
     page.add(
         ft.Stack(
             [
-                # Фон
                 ft.Container(
-                    content=ft.Image(
-                        src=os.path.join(icons_dir, "background.png"),
-                        width=800,
-                        height=600,
-                        fit="fill",
-                    ),
+                    content=background_image,
                     width=800,
                     height=600,
                 ),
-                
-                # Счётчик (верхний правый угол)
+
+                change_bg_container,
+
                 ft.Container(
                     content=clicks_text,
                     top=20,
                     right=20,
                     padding=10,
                 ),
-                
-                # Кнопка улучшения (левее основной кнопки)
+
                 ft.Container(
                     content=upgrade_container,
                     top=230,
                     left=30,
                 ),
-                
-                # Кликабельная картинка по центру
+
                 ft.Container(
                     content=main_image_container,
                     top=100,
