@@ -1,9 +1,11 @@
 import flet as ft
 import os
+import sys
+import json
 
 def main(page: ft.Page):
     # Настройка страницы
-    page.title = "Кликер"
+    page.title = "MakanForever"
     page.window.width = 800
     page.window.height = 600
     page.window.resizable = False
@@ -12,19 +14,34 @@ def main(page: ft.Page):
     # Получение абсолютного пути к папке проекта
     project_dir = os.path.dirname(os.path.abspath(__file__))
     icons_dir = os.path.join(project_dir, "Icons")
+    save_path_json = os.path.join(os.path.dirname(sys.executable), "save.json")
+    save_path_txt = os.path.join(os.path.dirname(sys.executable), "save.txt")
     
     # Переменные состояния
     current_clicks = 0
     clicks_per_click = 1
     upgrade_level = 0
     hundred_reached = False
+
+    # Загрузка сохранения
+    try:
+        if os.path.exists(save_path_json):
+            with open(save_path_json, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                current_clicks = data.get("counter", 0)
+        elif os.path.exists(save_path_txt):
+            with open(save_path_txt, "r", encoding="utf-8") as f:
+                current_clicks = int(f.read())
+    except Exception as err:
+        print("Ошибка при загрузке сохранения:", err)
+        current_clicks = 0
     
     # Стоимости улучшений
     upgrade_costs = [50, 150, 300, 450, 600]
     
     # Создаем элементы интерфейса
-    clicks_text = ft.Text(value="Клики: 0", size=30, color="white", weight="bold")
-    upgrade_text = ft.Text(value="Улучшение +2\n(50 кликов)\nУр. 1", size=16, color="black", weight="bold", text_align="center")
+    clicks_text = ft.Text(value=f"Клики: {current_clicks}", size=30, color="white", weight="bold")
+    upgrade_text = ft.Text(value="Улучшение +1\n(50 кликов)\nУр. 1", size=16, color="black", weight="bold", text_align="center")
     
     # Основное изображение для кликов
     main_image = ft.Image(
@@ -129,12 +146,19 @@ def main(page: ft.Page):
             padding=10,
         )
     )
-
-    change_bg_container = ft.Container(
-        content=change_bg_button,
-        top=20,
-        left=20,
+    def open_menu(e):
+        page.go("/menu")
+    
+    menu_button = ft.TextButton(
+    text="Меню",
+    on_click=open_menu,
+    style=ft.ButtonStyle(
+        bgcolor="white",
+        color="black",
+        padding=10,
     )
+)
+
 
     page.add(
         ft.Stack(
@@ -144,32 +168,151 @@ def main(page: ft.Page):
                     width=800,
                     height=600,
                 ),
-
-                change_bg_container,
-
+                
                 ft.Container(
                     content=clicks_text,
-                    top=20,
-                    right=20,
+                    top=450,
+                    left=310,
                     padding=10,
                 ),
-
+                
                 ft.Container(
                     content=upgrade_container,
                     top=230,
                     left=30,
                 ),
-
+                
                 ft.Container(
                     content=main_image_container,
                     top=100,
                     left=200,
-                )
+                ),
+                ft.Container(
+                    content=change_bg_button,
+                    top=20,
+                    left=20,
+                ),
+                ft.Container(
+                    content=menu_button,
+                    top=20,
+                    right=20,
+                ),
             ],
             width=800,
             height=600,
         )
     )
+    
+    def route_change(e):
+        if page.route == "/menu":
+            page.views.clear()
+
+            menu_background = ft.Container(
+                bgcolor="#1e1e1e",
+                width=800,
+                height=600,
+            )
+
+            menu_title = ft.Text(
+                "Пауза",
+                size=40,
+                weight="bold",
+                color="white",
+                text_align="center"
+            )
+
+            def close_app(e):
+                try:
+                    with open(save_path_json, "w", encoding="utf-8") as f:
+                        json.dump({"counter": current_clicks}, f)
+                    with open(save_path_txt, "w", encoding="utf-8") as f:
+                        f.write(str(current_clicks))
+                except Exception as err:
+                    print("Ошибка при сохранении:", err)
+                page.window.close()
+
+            resume_button = ft.ElevatedButton(
+                text="Продолжить",
+                style=ft.ButtonStyle(bgcolor="#08960c", color="white"),
+                on_click=lambda e: page.go("/")
+            )
+
+            exit_button = ft.ElevatedButton(
+                text="Выход",
+                style=ft.ButtonStyle(bgcolor="#971910", color="white"),
+                on_click=close_app
+            )
+            def reset_save(e):
+                nonlocal current_clicks, clicks_per_click, upgrade_level, hundred_reached
+                try:
+                    if os.path.exists(save_path_json):
+                        os.remove(save_path_json)
+                    if os.path.exists(save_path_txt):
+                        os.remove(save_path_txt)
+                except Exception as err:
+                    print("Ошибка при удалении сохранений:", err)
+                current_clicks = 0
+                clicks_per_click = 1
+                upgrade_level = 0
+                hundred_reached = False
+                update_counter()
+                page.go("/") 
+            
+            reset_button = ft.ElevatedButton(
+                text="Сбросить сохранения",
+                style=ft.ButtonStyle(bgcolor="#555555", color="white"),
+                on_click=reset_save
+            )
+        
+
+            menu_layout = ft.Column(
+                [
+                    menu_title,
+                    ft.Divider(thickness=2, color="white"),
+                    resume_button,
+                    reset_button,
+                    exit_button
+                ],
+                alignment="center",
+                horizontal_alignment="center",
+                spacing=25
+            )
+
+            page.views.append(
+                ft.View(
+                    "/menu",
+                    controls=[
+                        ft.Stack([
+                            menu_background,
+                            ft.Container(content=menu_layout, alignment=ft.alignment.center)
+                        ])
+                    ]
+                )
+            )
+
+        elif page.route == "/":
+            page.views.clear()
+            page.views.append(
+                ft.View(
+                    "/",
+                    controls=[page.controls[0]]
+                )
+            )
+        page.update()
+
+    def on_close(e):
+        try:
+            with open(save_path_json, "w", encoding="utf-8") as f:
+                json.dump({"counter": current_clicks}, f)
+            with open(save_path_txt, "w", encoding="utf-8") as f:
+                f.write(str(current_clicks))
+        except Exception as err:
+            print("Ошибка при сохранении:", err)
+
+    page.on_window_event = lambda e: on_close(e) if e.data == "close" else None
+    page.on_route_change = route_change
+    page.go(page.route)
+
 
 if __name__ == "__main__":
     ft.app(target=main)
