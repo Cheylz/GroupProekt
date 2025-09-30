@@ -50,6 +50,12 @@ def main(page: ft.Page):
         height=300,
         fit="contain",
     )
+    brat_audio = ft.Audio(
+        src=os.path.join(icons_dir, "brat.mp3"),
+        autoplay=False,
+        volume=1.0
+    )
+    page.overlay.append(brat_audio)
     
     # Контейнер для кнопки улучшения
     upgrade_container = ft.Container(
@@ -88,8 +94,9 @@ def main(page: ft.Page):
     def increment_click(e):
         nonlocal current_clicks, hundred_reached
         current_clicks += clicks_per_click
+        brat_audio.play()
         update_counter()
-        
+
         # Смена картинки при достижении 100 кликов
         if current_clicks >= 100 and not hundred_reached:
             hundred_reached = True
@@ -146,67 +153,85 @@ def main(page: ft.Page):
             padding=10,
         )
     )
+    
     def open_menu(e):
         page.go("/menu")
     
+    def open_about(e):
+        page.go("/about")
+    
     menu_button = ft.TextButton(
-    text="Меню",
-    on_click=open_menu,
-    style=ft.ButtonStyle(
-        bgcolor="white",
-        color="black",
-        padding=10,
-    )
-)
-
-
-    page.add(
-        ft.Stack(
-            [
-                ft.Container(
-                    content=background_image,
-                    width=800,
-                    height=600,
-                ),
-                
-                ft.Container(
-                    content=clicks_text,
-                    top=450,
-                    left=310,
-                    padding=10,
-                ),
-                
-                ft.Container(
-                    content=upgrade_container,
-                    top=230,
-                    left=30,
-                ),
-                
-                ft.Container(
-                    content=main_image_container,
-                    top=100,
-                    left=200,
-                ),
-                ft.Container(
-                    content=change_bg_button,
-                    top=20,
-                    left=20,
-                ),
-                ft.Container(
-                    content=menu_button,
-                    top=20,
-                    right=20,
-                ),
-            ],
-            width=800,
-            height=600,
+        text="Меню",
+        on_click=open_menu,
+        style=ft.ButtonStyle(
+            bgcolor="white",
+            color="black",
+            padding=10,
         )
     )
-    
-    def route_change(e):
-        if page.route == "/menu":
-            page.views.clear()
 
+    about_button = ft.TextButton(
+        text="О программе",
+        on_click=open_about,
+        style=ft.ButtonStyle(
+            bgcolor="white",
+            color="black",
+            padding=10,
+        )
+    )
+
+    # Основной вид
+    main_view = ft.Stack(
+        [
+            ft.Container(
+                content=background_image,
+                width=800,
+                height=600,
+            ),
+            
+            ft.Container(
+                content=clicks_text,
+                top=450,
+                left=310,
+                padding=10,
+            ),
+            
+            ft.Container(
+                content=upgrade_container,
+                top=230,
+                left=30,
+            ),
+            
+            ft.Container(
+                content=main_image_container,
+                top=100,
+                left=200,
+            ),
+            ft.Container(
+                content=change_bg_button,
+                top=20,
+                left=20,
+            ),
+            ft.Container(
+                content=menu_button,
+                top=20,
+                right=20,
+            ),
+            ft.Container(
+                content=about_button,
+                top=100,
+                right=20,
+            ),
+        ],
+        width=800,
+        height=600,
+    )
+
+    def route_change(e):
+        page.views.clear()
+        
+        if page.route == "/menu":
+            # Страница меню
             menu_background = ft.Container(
                 bgcolor="#1e1e1e",
                 width=800,
@@ -242,6 +267,7 @@ def main(page: ft.Page):
                 style=ft.ButtonStyle(bgcolor="#971910", color="white"),
                 on_click=close_app
             )
+            
             def reset_save(e):
                 nonlocal current_clicks, clicks_per_click, upgrade_level, hundred_reached
                 try:
@@ -263,7 +289,6 @@ def main(page: ft.Page):
                 style=ft.ButtonStyle(bgcolor="#555555", color="white"),
                 on_click=reset_save
             )
-        
 
             menu_layout = ft.Column(
                 [
@@ -289,30 +314,120 @@ def main(page: ft.Page):
                     ]
                 )
             )
+        
+        elif page.route == "/about":
+            # Страница "О программе"
+            about_background = ft.Container(
+                bgcolor="#2e2e2e",
+                width=800,
+                height=600,
+            )
 
-        elif page.route == "/":
-            page.views.clear()
+            about_title = ft.Row(
+                [
+                    ft.Text(
+                        "О программе",
+                        size=40,
+                        weight="bold",
+                        color="white",
+                        expand=True,
+                        text_align="center"
+                    ),
+                    ft.ElevatedButton(
+                        text="Назад",
+                        style=ft.ButtonStyle(bgcolor="#08960c", color="white"),
+                        on_click=lambda e: page.go("/")
+                    )
+                ],
+                alignment="center",
+                vertical_alignment="center",
+                width=600
+            )
+
+            # Информация о программе
+            program_info = ft.Column(
+                [
+                    ft.Text("MakanForever", size=24, color="white", weight="bold"),
+                    ft.Text("Версия: 1.0.0", size=18, color="white"),
+                    ft.Text("Автор: Братишка Dev Team", size=18, color="white"),
+                    ft.Text("Дата выпуска: 2024", size=18, color="white"),
+                    ft.Divider(thickness=2, color="white"),
+                    ft.Text("Описание:", size=20, color="white", weight="bold"),
+                    ft.Text(
+                        "Инкрементальная игра про клики по Макану.\n"
+                        "Кликайте по Макану, зарабатывайте очки,\n"
+                        "покупайте улучшения и становитесь самым\n"
+                        "крутым кликером в истории!",
+                        size=16,
+                        color="white",
+                        text_align="center"
+                    ),
+                    ft.Divider(thickness=2, color="white"),
+                    ft.Text("Спасибо за использование MakanForever!", 
+                           size=16, color="yellow", weight="bold", text_align="center")
+                ],
+                alignment="center",
+                horizontal_alignment="center",
+                spacing=15
+            )
+
+            about_layout = ft.Column(
+                [
+                    about_title,
+                    ft.Divider(thickness=2, color="white"),
+                    program_info,
+                ],
+                alignment="center",
+                horizontal_alignment="center",
+                spacing=30
+            )
+
+            page.views.append(
+                ft.View(
+                    "/about",
+                    controls=[
+                        ft.Stack([
+                            about_background,
+                            ft.Container(content=about_layout, alignment=ft.alignment.center)
+                        ])
+                    ]
+                )
+            )
+        
+        else:  # Главная страница
             page.views.append(
                 ft.View(
                     "/",
-                    controls=[page.controls[0]]
+                    controls=[main_view],
+                    vertical_alignment="start",
+                    horizontal_alignment="start"
                 )
             )
         page.update()
 
+    def view_pop(e):
+        if len(page.views) > 1:
+            page.views.pop()
+            top_view = page.views[-1]
+            page.go(top_view.route)
+
     def on_close(e):
-        try:
-            with open(save_path_json, "w", encoding="utf-8") as f:
-                json.dump({"counter": current_clicks}, f)
-            with open(save_path_txt, "w", encoding="utf-8") as f:
-                f.write(str(current_clicks))
-        except Exception as err:
-            print("Ошибка при сохранении:", err)
+        if e.data == "close":
+            try:
+                with open(save_path_json, "w", encoding="utf-8") as f:
+                    json.dump({"counter": current_clicks}, f)
+                with open(save_path_txt, "w", encoding="utf-8") as f:
+                    f.write(str(current_clicks))
+            except Exception as err:
+                print("Ошибка при сохранении:", err)
 
-    page.on_window_event = lambda e: on_close(e) if e.data == "close" else None
+    # Устанавливаем обработчики ДО вызова page.go()
     page.on_route_change = route_change
-    page.go(page.route)
+    page.on_view_pop = view_pop
+    page.on_window_event = on_close
 
+    # Инициализируем приложение с главной страницей
+    page.go("/")
 
 if __name__ == "__main__":
     ft.app(target=main)
